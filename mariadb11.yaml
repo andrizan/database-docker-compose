@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  mysql:
+    image: mariadb:11.0.2-jammy
+    environment:
+      - MYSQL_ROOT_PASSWORD=admin
+    ports:
+      - '3306:3306'
+    volumes:
+      - maria11_db:/var/lib/mysql
+volumes:
+  maria11_db:
+    driver: local
