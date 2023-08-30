@@ -1,0 +1,18 @@
+# cqlsh -u cassandra -p cassandra == default account
+
+version: "3"
+
+services:
+  scylla-node1:
+    container_name: scylla-node1
+    image: scylladb/scylla:5.2.0
+    command: "--smp 1 --memory 750M --overprovisioned 1 --authenticator PasswordAuthenticator"
+    # restart: always
+    ports:
+      - "9042:9042"
+    volumes:
+      - scylla_local:/var/lib/scylla
+
+volumes:
+  scylla_local:
+    driver: local
