@@ -1,0 +1,121 @@
+# https://github.com/bitnami/containers/issues/27124
+# https://blog.shiftasia.com/postgres-failover-with-repmgr/
+version: '3.8'
+
+networks:
+  default:
+    name: pg-repmgr
+    driver: bridge
+
+volumes:
+  pg_0_data:
+    driver: local
+  pg_1_data:
+    driver: local
+  pgw_0_data:
+    driver: local
+
+configs:
+  haproxy:
+    file: ./haproxy.cfg
+
+services:
+
+  pg-0:
+    image: bitnami/postgresql-repmgr:15.4.0
+    # ports:
+    #   - 6430:5432
+    volumes:
+      - pg_0_data:/bitnami/postgresql
+    environment:
+      - POSTGRESQL_POSTGRES_PASSWORD=rootpassword
+      - POSTGRESQL_USERNAME=userdb
+      - POSTGRESQL_PASSWORD=userpass
+      - POSTGRESQL_DATABASE=db_app
+      - REPMGR_PASSWORD=repmgrpass
+      - POSTGRESQL_SHARED_PRELOAD_LIBRARIES=pgaudit,pg_stat_statements
+      - REPMGR_PRIMARY_HOST=pg-0
+      - REPMGR_PRIMARY_PORT=5432
+      - REPMGR_PARTNER_NODES=pg-0:5432,pg-1:5432,pgw-0:5432
+      - REPMGR_NODE_NAME=pg-0
+      - REPMGR_NODE_NETWORK_NAME=pg-0
+      - REPMGR_PORT_NUMBER=5432
+    deploy:
+      resources:
+        limits:
+           memory: 2G
+      replicas: 1
+      placement:
+        max_replicas_per_node: 1
+
+  pg-1:
+    image: bitnami/postgresql-repmgr:15.4.0
+    # ports:
+    #   - 6431:5432
+    volumes:
+      - pg_1_data:/bitnami/postgresql
+    environment:
+      - POSTGRESQL_POSTGRES_PASSWORD=rootpassword
+      - POSTGRESQL_USERNAME=userdb
+      - POSTGRESQL_PASSWORD=userpass
+      - POSTGRESQL_DATABASE=db_app
+      - REPMGR_PASSWORD=repmgrpass
+      - POSTGRESQL_SHARED_PRELOAD_LIBRARIES=pgaudit,pg_stat_statements
+      - REPMGR_PRIMARY_HOST=pg-0
+      - REPMGR_PRIMARY_PORT=5432
+      - REPMGR_PARTNER_NODES=pg-0:5432,pg-1:5432,pgw-0:5432
+      - REPMGR_NODE_NAME=pg-1
+      - REPMGR_NODE_NETWORK_NAME=pg-1
+      - REPMGR_PORT_NUMBER=5432
+    deploy:
+      resources:
+        limits:
+           memory: 2G
+      replicas: 1
+      placement:
+        max_replicas_per_node: 1
+
+  pgw-0:
+    image: bitnami/postgresql-repmgr:15.4.0
+    # ports:
+    #   - 6439:5432
+    volumes:
+      - pgw_0_data:/bitnami/postgresql
+    environment:
+      - POSTGRESQL_POSTGRES_PASSWORD=rootpassword
+      - POSTGRESQL_USERNAME=userdb
+      - POSTGRESQL_PASSWORD=userpass
+      - POSTGRESQL_DATABASE=db_app
+      - REPMGR_PASSWORD=repmgrpass
+      - POSTGRESQL_SHARED_PRELOAD_LIBRARIES=pgaudit,pg_stat_statements
+      - REPMGR_PRIMARY_HOST=pg-0
+      - REPMGR_PRIMARY_PORT=5432
+      - REPMGR_PARTNER_NODES=pg-0:5432,pg-1:5432,pgw-0:5432
+      - REPMGR_NODE_NAME=pgw-0
+      - REPMGR_NODE_NETWORK_NAME=pgw-0
+      - REPMGR_PORT_NUMBER=5432
+      - REPMGR_NODE_TYPE=witness
+      - BITNAMI_DEBUG=true
+      - REPMGR_NODE_ID_START_SEED=2000
+    deploy:
+      resources:
+        limits:
+           memory: 2G
+      replicas: 1
+      placement:
+        max_replicas_per_node: 1
+
+  haproxy:
+    image: haproxy:2.8.3
+    mem_limit: 8192m
+    ports:
+      - 3000:3000
+      - 5432:5432
+    privileged: true
+    depends_on:
+    - pg-0
+    - pg-1
+    - pgw-0
+    configs:
+      - source: haproxy
+        target: /usr/local/etc/haproxy/haproxy.cfg
