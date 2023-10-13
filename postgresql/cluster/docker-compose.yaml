@@ -15,10 +15,6 @@ volumes:
   pgw_0_data:
     driver: local
 
-configs:
-  haproxy:
-    file: ./haproxy.cfg
-
 services:
 
   pg-0:
@@ -110,18 +106,25 @@ services:
       replicas: 1
       placement:
         max_replicas_per_node: 1
-
-  haproxy:
-    image: haproxy:2.8.3
-    mem_limit: 8192m
+        
+ pg-pool:
+    image: bitnami/pgpool:latest
     ports:
-      - 3000:3000
       - 5432:5432
-    privileged: true
-    depends_on:
-    - pg-0
-    - pg-1
-    - pgw-0
-    configs:
-      - source: haproxy
-        target: /usr/local/etc/haproxy/haproxy.cfg
+    environment:
+      - PGPOOL_BACKEND_NODES=0:pg-0:5432,1:pg-1:5432,2:pgw-0:5432
+      - PGPOOL_SR_CHECK_USER=repmgr
+      - PGPOOL_SR_CHECK_PASSWORD=repmgrpassword
+      - PGPOOL_ENABLE_LDAP=no
+      - PGPOOL_POSTGRES_USERNAME=postgres
+      - PGPOOL_POSTGRES_PASSWORD=adminpassword
+      - PGPOOL_ADMIN_USERNAME=admin
+      - PGPOOL_ADMIN_PASSWORD=adminpassword
+      - PGPOOL_ENABLE_LOAD_BALANCING=yes
+      - PGPOOL_POSTGRES_CUSTOM_USERS=customuser
+      - PGPOOL_POSTGRES_CUSTOM_PASSWORDS=custompassword
+    healthcheck:
+      test: ["CMD", "/opt/bitnami/scripts/pgpool/healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
