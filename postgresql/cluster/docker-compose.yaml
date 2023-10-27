@@ -75,7 +75,7 @@ services:
       placement:
         max_replicas_per_node: 1
 
-  pgw-0:
+  pgw-0: # sering bermasalah
     image: bitnami/postgresql-repmgr:15.4.0
     # ports:
     #   - 6439:5432
@@ -123,6 +123,10 @@ services:
       - PGPOOL_ENABLE_LOAD_BALANCING=yes
       - PGPOOL_POSTGRES_CUSTOM_USERS=customuser
       - PGPOOL_POSTGRES_CUSTOM_PASSWORDS=custompassword
+    depends_on:
+      - pg-0
+      - pg-1
+      - pgw-0
     healthcheck:
       test: ["CMD", "/opt/bitnami/scripts/pgpool/healthcheck.sh"]
       interval: 10s
