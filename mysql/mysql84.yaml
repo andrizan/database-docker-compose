@@ -1,0 +1,16 @@
+# version: '3.8'
+services:
+  mysql:
+    image: mysql:8.4
+    command:
+        --mysql-native-password=ON
+    environment:
+        - MYSQL_ROOT_PASSWORD=admin
+        - MYSQL_ROOT_HOST:"0.0.0.0"
+    ports:
+      - '3306:3306'
+    volumes:
+      - mysql84_db:/var/lib/mysql
+volumes:
+  mysql84_db:
+    driver: local

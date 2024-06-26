@@ -1,0 +1,56 @@
+version: "3.8"
+
+networks:
+  default:
+    name: percona-nw
+    driver: bridge
+
+volumes:
+  percona-data-n1:
+    driver: local
+  percona-data-n2:
+    driver: local
+  percona-data-n3:
+    driver: local
+
+services:
+  percona-n1:
+      container_name: percona-n1
+      image: percona/percona-xtradb-cluster:8.0
+      command: --default-authentication-plugin=mysql_native_password
+      environment:
+        MYSQL_ROOT_PASSWORD: admin
+        CLUSTER_NAME: pxc-cluster1
+      volumes:
+      - percona-data-n1:/var/lib/mysql
+      ports:
+      - "3306:3306"
+      - "4444:4444"
+      - "4567:4567"
+      - "4568:4568"
+
+  percona-n2:
+      container_name: percona-n2
+      image: percona/percona-xtradb-cluster:8.0
+      command: --default-authentication-plugin=mysql_native_password
+      environment:
+        MYSQL_ROOT_PASSWORD: admin
+        CLUSTER_NAME: pxc-cluster1
+        CLUSTER_JOIN: percona-n1
+      # ports:
+      # - "3307:3306"
+      volumes:
+      - percona-data-n2:/var/lib/mysql
+
+  percona-n3:
+      container_name: percona-n3
+      image: percona/percona-xtradb-cluster:8.0
+      command: --default-authentication-plugin=mysql_native_password
+      environment:
+        MYSQL_ROOT_PASSWORD: admin
+        CLUSTER_NAME: pxc-cluster1
+        CLUSTER_JOIN: percona-n1
+      # ports:
+      # - "3308:3306"
+      volumes:
+      - percona-data-n3:/var/lib/mysql
