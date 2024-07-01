@@ -1,7 +1,8 @@
-version: '3.9'
+#version: '3.9'
 services:
   haproxy:
     build: 'haproxy'
+    restart: always
     ports:
       - 5432:5432
       - 7000:7000
@@ -36,7 +37,7 @@ services:
     ports:
       - 5433:5432
     volumes:
-      - '/var/lib/postgresql/data'
+      - pg_data_master:/var/lib/postgresql/data
     command: patroni /postgres0.yaml
 
   pg-slave:
@@ -50,9 +51,15 @@ services:
     ports:
       - 5434:5432
     volumes:
-      - '/var/lib/postgresql/data'
+      - pg_data_slave:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       PGDATA: '/var/lib/postgresql/data/pgdata'
     command: patroni /postgres1.yaml
+
+volumes:
+  pg_data_master:
+    driver: local
+  pg_data_slave:
+    driver: local
