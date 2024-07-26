@@ -18,6 +18,7 @@ RUN python3 -m venv /opt/patroni-venv && \
 # Copy the Patroni configuration files
 COPY postgres0.yaml /postgres0.yaml
 COPY postgres1.yaml /postgres1.yaml
+COPY postgres1.yaml /postgres2.yaml
 
 ENV PATH="/opt/patroni-venv/bin:$PATH"
 

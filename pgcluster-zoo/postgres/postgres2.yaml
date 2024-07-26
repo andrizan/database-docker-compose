@@ -1,10 +1,10 @@
 scope: batman
 #namespace: /service/
-name: postgresql1
+name: postgresql2
 
 restapi:
-  listen: pg-slave1:8008
-  connect_address: pg-slave1:8008
+  listen: pg-slave2:8008
+  connect_address: pg-slave2:8008
 #  certfile: /etc/ssl/certs/ssl-cert-snakeoil.pem
 #  keyfile: /etc/ssl/private/ssl-cert-snakeoil.key
 #  authentication:
@@ -17,8 +17,6 @@ zookeeper:
 
 
 bootstrap:
-  # this section will be written into Etcd:/<namespace>/<scope>/config after initializing new cluster
-  # and all other cluster members will use it as a `global configuration`
   dcs:
     ttl: 30
     loop_wait: 10
@@ -63,11 +61,11 @@ bootstrap:
 
 postgresql:
   listen: 0.0.0.0:5432
-  connect_address: pg-slave1:5432
-  data_dir: /var/lib/postgresql/data/postgresql1
+  connect_address: pg-slave2:5432
+  data_dir: /var/lib/postgresql/data/postgresql2
   bin_dir: /usr/lib/postgresql/15/bin
 #  config_dir:
-  pgpass: /tmp/pgpass1
+  pgpass: /tmp/pgpass2
   authentication:
     replication:
       username: replicator

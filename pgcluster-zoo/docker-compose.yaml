@@ -9,7 +9,8 @@ services:
     depends_on:
       - zoo1
       - pg-master
-      - pg-slave
+      - pg-slave1
+      - pg-slave2
 
   zoo1:
     image: confluentinc/cp-zookeeper:latest
@@ -39,27 +40,63 @@ services:
     volumes:
       - pg_data_master:/var/lib/postgresql/data
     command: patroni /postgres0.yaml
+    networks:
+      - patroni-net
+    depends_on:
+      - zoo1
 
-  pg-slave:
+  pg-slave1:
     build: 'postgres'
-    container_name: pg-slave
+    container_name: pg-slave1
     restart: always
-    hostname: pg-slave
+    hostname: pg-slave1
     expose:
       - 5432
       - 8008
     ports:
       - 5434:5432
     volumes:
-      - pg_data_slave:/var/lib/postgresql/data
+      - pg_data_slave1:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       PGDATA: '/var/lib/postgresql/data/pgdata'
     command: patroni /postgres1.yaml
+    networks:
+      - patroni-net
+    depends_on:
+      - zoo1
+
+  pg-slave2:
+    build: 'postgres'
+    container_name: pg-slave2
+    restart: always
+    hostname: pg-slave2
+    expose:
+      - 5432
+      - 8008
+    ports:
+      - 5435:5432
+    volumes:
+      - pg_data_slave2:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      PGDATA: '/var/lib/postgresql/data/pgdata'
+    command: patroni /postgres2.yaml
+    networks:
+      - patroni-net
+    depends_on:
+      - zoo1
+
+networks:
+  patroni-net:
+    driver: bridge
 
 volumes:
   pg_data_master:
     driver: local
-  pg_data_slave:
+  pg_data_slave1:
+    driver: local
+  pg_data_slave2:
     driver: local
