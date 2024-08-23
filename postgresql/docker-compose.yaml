@@ -1,8 +1,6 @@
-version: '3.9'
-
 services:
   postgres:
-    image: postgres:15.4
+    image: postgres:15-bookworm
     ports:
       - 5432:5432
     volumes:
