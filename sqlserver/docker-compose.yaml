@@ -3,11 +3,10 @@ services:
     container_name: sql-server
     image: mcr.microsoft.com/mssql/server:2019-latest
     #image: mcr.microsoft.com/mssql/server:2017-CU11-ubuntu
-    restart: always
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_PID: "Express"
-      MSSQL_SA_PASSWORD: "@Example123"
+      MSSQL_SA_PASSWORD: "PASS"
     ports:
       - 1433:1433
     volumes:
