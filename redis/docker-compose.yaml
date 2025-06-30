@@ -1,6 +1,6 @@
 services:
   cache:
-    image: valkey/valkey:7.2.8-bookworm
+    image: valkey/valkey:7.2.9-bookworm
     restart: always
     ports:
       - '6379:6379'
