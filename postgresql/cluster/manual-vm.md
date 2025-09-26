@@ -260,6 +260,8 @@ postgresql:
       password: ${REPL_PASS}
   parameters:
     unix_socket_directories: '/var/run/postgresql'
+    listen_addresses: '0.0.0.0'
+    port: 5432
 EOF
 ```
 
@@ -299,6 +301,8 @@ postgresql:
       password: ${REPL_PASS}
   parameters:
     unix_socket_directories: '/var/run/postgresql'
+    listen_addresses: '0.0.0.0'
+    port: 5432
 EOF
 ```
 
@@ -338,6 +342,8 @@ postgresql:
       password: ${REPL_PASS}
   parameters:
     unix_socket_directories: '/var/run/postgresql'
+    listen_addresses: '0.0.0.0'
+    port: 5432
 EOF
 ```
 
@@ -474,4 +480,267 @@ sudo patronictl -c /etc/patroni/patroni.yml list
 
 # Cek leader election
 sudo patronictl -c /etc/patroni/patroni.yml show-config
+```
+---
+
+# Monitoring Dashboard
+
+## 🔹 1. Pasang **Node Exporter** (OS metrics) di semua node DB
+
+Di 10.212.100.70–72:
+
+```bash
+sudo apt update
+sudo apt install prometheus-node-exporter -y
+```
+
+Service otomatis jalan di port **:9100**
+→ bisa dicek via:
+
+```bash
+curl http://localhost:9100/metrics | head
+```
+
+---
+
+## 🔹 2. Pasang **Postgres Exporter** di semua node DB
+
+Ubuntu/Debian tidak ada package resmi, jadi pakai binary dari [prometheus-postgres-exporter](https://github.com/prometheus-community/postgres_exporter):
+
+```bash
+# install dependency
+sudo apt install wget tar -y
+
+# download versi terbaru
+PGE_VER=0.18.0
+wget https://github.com/prometheus-community/postgres_exporter/releases/download/v${PGE_VER}/postgres_exporter-${PGE_VER}.linux-amd64.tar.gz
+tar -xvf postgres_exporter-${PGE_VER}.linux-amd64.tar.gz
+cd postgres_exporter-${PGE_VER}.linux-amd64
+
+# pindahkan ke /usr/local/bin
+sudo mv postgres_exporter /usr/local/bin/
+```
+
+### Buat service systemd
+
+File `/etc/systemd/system/postgres_exporter.service`:
+
+```ini
+[Unit]
+Description=Prometheus PostgreSQL Exporter
+After=network.target
+
+[Service]
+User=postgres
+Environment=DATA_SOURCE_NAME=postgresql://postgres:password@localhost:5432/postgres?sslmode=disable
+ExecStart=/usr/local/bin/postgres_exporter --web.listen-address=":9187"
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Aktifkan:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now postgres_exporter
+```
+
+Tes:
+
+```bash
+curl http://localhost:9187/metrics | head
+```
+
+---
+
+## 🔹 3. Pasang **Prometheus** di VM Load Balancer (10.212.100.73)
+
+```bash
+sudo apt update
+sudo apt install prometheus -y
+```
+
+Edit `/etc/prometheus/prometheus.yml`:
+
+```yaml
+scrape_configs:
+  - job_name: 'node'
+    static_configs:
+      - targets: ['10.212.100.70:9100', '10.212.100.71:9100', '10.212.100.72:9100']
+
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['10.212.100.70:9187', '10.212.100.71:9187', '10.212.100.72:9187']
+
+  - job_name: 'patroni'
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['10.212.100.70:8008', '10.212.100.71:8008', '10.212.100.72:8008']
+```
+
+Restart:
+
+```bash
+sudo systemctl restart prometheus
+```
+
+---
+
+## 🔹 4. Pasang **Grafana** di VM LB
+
+```bash
+sudo apt install -y apt-transport-https software-properties-common
+wget -q -O - https://apt.grafana.com/gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/grafana.gpg
+echo "deb [signed-by=/usr/share/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee /etc/apt/sources.list.d/grafana.list
+sudo apt update
+sudo apt install grafana -y
+sudo systemctl enable --now grafana-server
+```
+
+Akses:
+👉 `http://10.212.100.73:3000` (admin / admin).
+Tambahkan Prometheus (`http://localhost:9090`) sebagai data source.
+
+---
+
+## 🔹 5. Import Dashboard JSON
+
+Gunakan dashboard JSON yang saya kasih sebelumnya → import ke Grafana.
+
+1. Login ke Grafana → Dashboards → Import.
+2. Pilih Upload JSON file atau paste JSON di bawah.
+3. Pilih Prometheus sebagai data source.
+
+```json
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "iteration": 1654860000000,
+  "panels": [
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "id": 1,
+      "targets": [
+        {
+          "expr": "rate(pg_stat_database_xact_commit{datname!~\"template.*|postgres\"}[1m])",
+          "legendFormat": "{{datname}} commits/s"
+        },
+        {
+          "expr": "rate(pg_stat_database_xact_rollback{datname!~\"template.*|postgres\"}[1m])",
+          "legendFormat": "{{datname}} rollbacks/s"
+        }
+      ],
+      "title": "Transactions per Second",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "targets": [
+        {
+          "expr": "pg_stat_activity_count{datname!~\"template.*|postgres\"}",
+          "legendFormat": "{{datname}} connections"
+        }
+      ],
+      "title": "Active Connections",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "id": 3,
+      "targets": [
+        {
+          "expr": "rate(pg_stat_bgwriter_buffers_checkpoint[1m])",
+          "legendFormat": "checkpoint buffers/s"
+        },
+        {
+          "expr": "rate(pg_stat_bgwriter_buffers_backend[1m])",
+          "legendFormat": "backend buffers/s"
+        }
+      ],
+      "title": "Buffer Writes",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "id": 4,
+      "targets": [
+        {
+          "expr": "pg_stat_replication_lag_bytes",
+          "legendFormat": "{{application_name}}"
+        }
+      ],
+      "title": "Replication Lag (bytes)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "id": 5,
+      "targets": [
+        {
+          "expr": "100 * (1 - (sum(pg_stat_database_blks_hit) / (sum(pg_stat_database_blks_hit) + sum(pg_stat_database_blks_read))))",
+          "legendFormat": "Cache Miss %"
+        }
+      ],
+      "title": "Buffer Cache Hit Ratio",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "id": 6,
+      "targets": [
+        {
+          "expr": "node_load1",
+          "legendFormat": "{{instance}} load1"
+        },
+        {
+          "expr": "node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100",
+          "legendFormat": "{{instance}} memory free %"
+        }
+      ],
+      "title": "Node Load & Memory",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 24 },
+      "id": 7,
+      "targets": [
+        {
+          "expr": "pg_stat_activity_count{datname!~\"template.*|postgres\"}",
+          "legendFormat": "Active Sessions"
+        },
+        {
+          "expr": "patroni_master",
+          "legendFormat": "Patroni Leader"
+        }
+      ],
+      "title": "Cluster Role (Leader vs Replica)",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 30,
+  "style": "dark",
+  "tags": ["postgres", "patroni"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "PostgreSQL + Patroni Cluster",
+  "uid": "postgres-patroni",
+  "version": 1
+}
 ```
