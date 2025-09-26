@@ -660,12 +660,16 @@ Gunakan dashboard JSON yang saya kasih sebelumnya → import ke Grafana.
       "id": 3,
       "targets": [
         {
-          "expr": "rate(pg_stat_bgwriter_buffers_checkpoint[1m])",
+          "expr": "rate(pg_stat_bgwriter_buffers_checkpoint_total[1m])",
           "legendFormat": "checkpoint buffers/s"
         },
         {
-          "expr": "rate(pg_stat_bgwriter_buffers_backend[1m])",
+          "expr": "rate(pg_stat_bgwriter_buffers_backend_total[1m])",
           "legendFormat": "backend buffers/s"
+        },
+        {
+          "expr": "rate(pg_stat_bgwriter_buffers_clean_total[1m])",
+          "legendFormat": "bgwriter clean buffers/s"
         }
       ],
       "title": "Buffer Writes",
@@ -677,8 +681,8 @@ Gunakan dashboard JSON yang saya kasih sebelumnya → import ke Grafana.
       "id": 4,
       "targets": [
         {
-          "expr": "pg_stat_replication_lag_bytes",
-          "legendFormat": "{{application_name}}"
+          "expr": "pg_stat_replication_pg_wal_lsn_diff",
+          "legendFormat": "{{application_name}} lag bytes"
         }
       ],
       "title": "Replication Lag (bytes)",
@@ -741,6 +745,6 @@ Gunakan dashboard JSON yang saya kasih sebelumnya → import ke Grafana.
   "timezone": "",
   "title": "PostgreSQL + Patroni Cluster",
   "uid": "postgres-patroni",
-  "version": 1
+  "version": 2
 }
 ```
