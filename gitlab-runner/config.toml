@@ -15,7 +15,7 @@ check_interval = 0
   [runners.custom_build_dir]
 
   [runners.cache]
-    Type = "local"
+    # Type = "local"
     Path = "/cache"
     Shared = true
 
