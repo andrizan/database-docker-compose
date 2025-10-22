@@ -38,7 +38,7 @@ request_concurrency = 4
 
     network_mode = "bridge"
     pull_policy = ["if-not-present"]
-    helper_image = "gitlab/gitlab-runner-helper:latest"
+    helper_image = "gitlab/gitlab-runner-helper:ubuntu-x86_64-v18.5.0"
 
   [runners.docker.tmpfs]
     "/tmp" = "rw,noexec,nosuid,size=512m"
