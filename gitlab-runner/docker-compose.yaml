@@ -1,0 +1,25 @@
+services:
+  gitlab-runner:
+    image: gitlab/gitlab-runner:ubuntu-v18.5.0
+    container_name: gitlab-runner
+    restart: always
+    volumes:
+      - ./config.toml:/etc/gitlab-runner/config.toml
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./cache:/cache
+    environment:
+      - DOCKER_DRIVER=overlay2
+    deploy:
+      resources:
+        limits:
+          cpus: '7.5'
+          memory: 15G
+        reservations:
+          cpus: '4'
+          memory: 8G
+    networks:
+      - gitlab-runner-network
+
+networks:
+  gitlab-runner-network:
+    driver: bridge
