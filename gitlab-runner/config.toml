@@ -1,6 +1,5 @@
 concurrent = 8
 check_interval = 0
-request_concurrency = 4
 
 [session_server]
   session_timeout = 3600
@@ -10,6 +9,7 @@ request_concurrency = 4
   url = "https://gitlab.com/"
   token = "YOUR_RUNNER_TOKEN"
   executor = "docker"
+  request_concurrency = 4
   tag_list = ["install-autoscale", "test-autoscale", "build-autoscale", "deploy-autoscale", "release-autoscale", "shared-autoscale"]
 
   [runners.custom_build_dir]
