@@ -1,0 +1,80 @@
+services:
+  sonarqube_db:
+    image: postgres:16-bookworm
+    container_name: sonarqube_db
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+      POSTGRES_DB: sonarqube
+      PGDATA: /var/lib/postgresql/data/pgdata
+      TZ: "Asia/Jakarta"
+    volumes:
+      - sonarqube_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sonar"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - network
+    restart: unless-stopped
+
+  sonarqube:
+    image: sonarqube:community
+    container_name: sonarqube
+    depends_on:
+      sonarqube_db:
+        condition: service_healthy
+    environment:
+      TZ: "Asia/Jakarta"
+      SONAR_JDBC_URL: jdbc:postgresql://sonarqube_db:5432/sonarqube
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar
+      SONAR_JAVAOPTS: "-Xms512m -Xmx2G"
+      SONAR_CE_JAVAOPTS: "-Xms1G -Xmx2G"
+      SONAR_WEB_JAVAOPTS: "-Xms512m -Xmx1G"
+      SONAR_TELEMETRY_ENABLE: "false"
+    expose:
+      - "9000" # internal only, tidak publish ke luar
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_logs:/opt/sonarqube/logs
+      - sonarqube_extensions:/opt/sonarqube/extensions
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9000/api/system/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    networks:
+      - network
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.29
+    container_name: sonarqube_nginx
+    depends_on:
+      - sonarqube
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - nginx_logs:/var/log/nginx
+    networks:
+      - network
+    restart: unless-stopped
+
+networks:
+  network:
+    driver: bridge
+
+volumes:
+  sonarqube_db_data:
+  sonarqube_data:
+  sonarqube_logs:
+  sonarqube_extensions:
+  nginx_logs:
