@@ -15,7 +15,7 @@ A collection of configuration templates, Docker Compose setups, and deployment e
 | `mongodb/`       | MongoDB configuration.                                            |
 | `mysql/`         | MySQL configuration and version updates.                          |
 | `pgcluster-zoo/` | PostgreSQL cluster setup with Patroni, HAProxy, and ETCD.         |
-| `postgresql/`    | Standalone PostgreSQL instance with Grafana JSON dashboards.      |
+| `postgresql/`    | Standalone PostgreSQL instance with PG-Cluster & Grafana JSON dashboards.      |
 | `rabbitmq/`      | RabbitMQ message broker setup.                                    |
 | `redis/`         | Redis/Valkey instance for caching and message queues.             |
 | `scylla-db/`     | ScyllaDB (Cassandra-compatible) setup.                            |
