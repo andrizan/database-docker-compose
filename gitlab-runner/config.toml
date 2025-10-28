@@ -1,4 +1,4 @@
-concurrent = 8
+concurrent = 3
 check_interval = 0
 
 [session_server]
@@ -6,10 +6,10 @@ check_interval = 0
 
 [[runners]]
   name = "docker-runner-01"
-  url = "https://gitlab.com/"
-  token = "YOUR_RUNNER_TOKEN"
+  url = "https://gitlab.com"
+  token = "SECRET_TOKEN"
   executor = "docker"
-  request_concurrency = 4
+  request_concurrency = 3
   tag_list = ["install-autoscale", "test-autoscale", "build-autoscale", "deploy-autoscale", "release-autoscale", "shared-autoscale"]
 
   [runners.custom_build_dir]
@@ -20,17 +20,17 @@ check_interval = 0
   [runners.docker]
     tls_verify = false
     image = "ubuntu:24.04"
-    privileged = false
+    privileged = true
     disable_entrypoint_overwrite = false
     oom_kill_disable = false
     disable_cache = false
     volumes = ["/cache:/cache:rw", "/var/run/docker.sock:/var/run/docker.sock"]
     shm_size = 2147483648
 
-    cpus = "1"
-    memory = "2g"
-    memory_swap = "2g"
-    memory_reservation = "1g"
+    cpus = "2.5"
+    memory = "5g"
+    memory_swap = "5g"
+    memory_reservation = "3g"
 
     network_mode = "bridge"
     pull_policy = ["if-not-present"]
