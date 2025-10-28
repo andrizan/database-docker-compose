@@ -171,18 +171,14 @@ deploy:
 
     - |
       ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" <<EOF
-        sudo chown -R $USER:$USER $DEPLOY_PATH
-        sudo chmod -R 775 $DEPLOY_PATH
-      EOF
-
-    - |
-      ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" <<EOF
         set -e
         cd $DEPLOY_PATH
 
         sudo mkdir -p ./logs
         sudo touch ./logs/web-error.log ./logs/web-out.log
-        sudo chmod -R 775 ./logs
+        
+        sudo chown -R $USER:$USER $DEPLOY_PATH
+        sudo chmod -R 775 $DEPLOY_PATH
 
         pm2 reload $DEPLOY_PATH/ecosystem.config.js --env production || pm2 start $DEPLOY_PATH/ecosystem.config.js --env production
         sudo pm2 save
