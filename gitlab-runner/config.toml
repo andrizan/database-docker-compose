@@ -15,11 +15,7 @@ check_interval = 0
   [runners.custom_build_dir]
 
   [runners.cache]
-    # Type = "local"
-    Path = "/cache"
-    Shared = true
-
-    [runners.cache.local]
+    MaxUploadedArchiveSize = 0  # 0 = unlimited
 
   [runners.docker]
     tls_verify = false
@@ -28,7 +24,7 @@ check_interval = 0
     disable_entrypoint_overwrite = false
     oom_kill_disable = false
     disable_cache = false
-    volumes = ["/cache", "/var/run/docker.sock:/var/run/docker.sock"]
+    volumes = ["/cache:/cache:rw", "/var/run/docker.sock:/var/run/docker.sock"]
     shm_size = 2147483648
 
     cpus = "1"
