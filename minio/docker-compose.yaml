@@ -1,6 +1,7 @@
 services:
   minio:
-    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+    image: quay.io/minio/minio:RELEASE.2025-04-08T15-41-24Z # jangan di ganti untuk menghidari degradasi WebUI
+    container_name: minio
     volumes:
       - ./data:/data
     ports:
