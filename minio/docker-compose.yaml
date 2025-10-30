@@ -2,14 +2,20 @@ services:
   minio:
     image: quay.io/minio/minio:RELEASE.2025-04-08T15-41-24Z # jangan di ganti untuk menghidari degradasi WebUI
     container_name: minio
-    volumes:
-      - ./data:/data
     ports:
-      - 9000:9000
-      - 9001:9001
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
     environment:
-      MINIO_ROOT_USER: 'adminminio'
-      MINIO_ROOT_PASSWORD: 'userminio'
-      MINIO_ADDRESS: ':9000'
-      MINIO_CONSOLE_ADDRESS: ':9001'
-    command: minio server /data
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  minio_data:
