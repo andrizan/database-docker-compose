@@ -181,7 +181,7 @@ deploy:
         sudo chmod -R 775 $DEPLOY_PATH
 
         pm2 reload $DEPLOY_PATH/ecosystem.config.js --env production || pm2 start $DEPLOY_PATH/ecosystem.config.js --env production
-        sudo pm2 save
+        pm2 save
       EOF
   environment:
     name: production
